@@ -1,12 +1,11 @@
-
 bl_info = {
-    "name": "Turntable Studio v14",
-    "author": "Youjie + ChatGPT",
-    "version": (1, 0, 0),
+    "name": "Turntable Studio",
+    "author": "Youjie + ChatGPT, wei_sheng",
+    "version": (0, 17, 0),
     "blender": (2, 80, 0),
     "location": "View3D > Sidebar > Turntable",
     "description": "Area lights (track to model), per-light intensity & color, camera distance, model rotation animation, Apply Setup",
-    "category": "3D View",
+    "category": "3D View"
 }
 
 import bpy
@@ -20,19 +19,11 @@ FILL_NAME = "Fill_Light"
 RIM_NAME = "Rim_Light"
 COLLECTION_NAME = "Turntable_Studio"
 
+
 # ---- utilities ----
 def get_world_bounds_size(obj):
-    try:
-        verts = obj.data.vertices
-        if len(verts) == 0:
-            return obj.dimensions.x, obj.dimensions.y, obj.dimensions.z
-        coords = [obj.matrix_world @ v.co for v in verts]
-        min_x = min(v.x for v in coords); max_x = max(v.x for v in coords)
-        min_y = min(v.y for v in coords); max_y = max(v.y for v in coords)
-        min_z = min(v.z for v in coords); max_z = max(v.z for v in coords)
-        return max_x - min_x, max_y - min_y, max_z - min_z
-    except Exception:
-        return obj.dimensions.x, obj.dimensions.y, obj.dimensions.z
+    return obj.dimensions.x, obj.dimensions.y, obj.dimensions.z
+
 
 def ensure_collection(name):
     col = bpy.data.collections.get(name)
@@ -40,6 +31,7 @@ def ensure_collection(name):
         col = bpy.data.collections.new(name)
         bpy.context.scene.collection.children.link(col)
     return col
+
 
 # ---- camera create/update ----
 def create_or_update_camera(target, dist, height):
@@ -50,7 +42,8 @@ def create_or_update_camera(target, dist, height):
     else:
         cam_data = bpy.data.cameras.new(CAM_NAME + "_data")
         cam = bpy.data.objects.new(CAM_NAME, cam_data)
-        bpy.context.collection.objects.link(cam)
+        col.objects.link(cam)
+        cam.location = target.location + Vector((0, -dist, height))
     if cam.name not in col.objects:
         try:
             col.objects.link(cam)
@@ -69,6 +62,7 @@ def create_or_update_camera(target, dist, height):
     track.up_axis = 'UP_Y'
     return cam
 
+
 # ---- area light create/update ----
 def create_or_update_area_light(name, data_name, target, offset, energy, color, size):
     col = ensure_collection(COLLECTION_NAME)
@@ -86,7 +80,7 @@ def create_or_update_area_light(name, data_name, target, offset, energy, color, 
         except Exception:
             pass
         light_obj = bpy.data.objects.new(name, ldata)
-        bpy.context.collection.objects.link(light_obj)
+        col.objects.link(light_obj)
     if light_obj.name not in col.objects:
         try:
             col.objects.link(light_obj)
@@ -108,6 +102,7 @@ def create_or_update_area_light(name, data_name, target, offset, energy, color, 
     tr.up_axis = 'UP_Y'
     return light_obj
 
+
 # ---- update callbacks (bound to scene props) ----
 def update_camera_distance(self, context):
     cam = bpy.data.objects.get(CAM_NAME)
@@ -119,35 +114,6 @@ def update_camera_distance(self, context):
         dir_vec.normalize()
         cam.location = target.location + dir_vec * context.scene.tt_camera_distance
 
-def update_key_strength(self, context):
-    obj = bpy.data.objects.get(KEY_NAME)
-    if obj and obj.type == 'LIGHT':
-        obj.data.energy = context.scene.tt_key_strength
-
-def update_fill_strength(self, context):
-    obj = bpy.data.objects.get(FILL_NAME)
-    if obj and obj.type == 'LIGHT':
-        obj.data.energy = context.scene.tt_fill_strength
-
-def update_rim_strength(self, context):
-    obj = bpy.data.objects.get(RIM_NAME)
-    if obj and obj.type == 'LIGHT':
-        obj.data.energy = context.scene.tt_rim_strength
-
-def update_key_color(self, context):
-    obj = bpy.data.objects.get(KEY_NAME)
-    if obj and obj.type == 'LIGHT':
-        obj.data.color = context.scene.tt_key_color
-
-def update_fill_color(self, context):
-    obj = bpy.data.objects.get(FILL_NAME)
-    if obj and obj.type == 'LIGHT':
-        obj.data.color = context.scene.tt_fill_color
-
-def update_rim_color(self, context):
-    obj = bpy.data.objects.get(RIM_NAME)
-    if obj and obj.type == 'LIGHT':
-        obj.data.color = context.scene.tt_rim_color
 
 # when target changes, rebuild/relocate scene objects
 def update_target(self, context):
@@ -161,11 +127,15 @@ def update_target(self, context):
     cam = create_or_update_camera(target, default_dist, default_height)
     context.scene.tt_camera_distance = (cam.location - target.location).length
     light_dist = max_s * 2.0
-    create_or_update_area_light(KEY_NAME, "Key_Data", target, (light_dist, -light_dist, max_s), context.scene.tt_key_strength, context.scene.tt_key_color, max_s)
-    create_or_update_area_light(FILL_NAME, "Fill_Data", target, (-light_dist, light_dist, max_s * 0.7), context.scene.tt_fill_strength, context.scene.tt_fill_color, max_s)
-    create_or_update_area_light(RIM_NAME, "Rim_Data", target, (0, -light_dist * 1.3, max_s * 0.8), context.scene.tt_rim_strength, context.scene.tt_rim_color, max_s)
+    create_or_update_area_light(KEY_NAME, "Key_Data", target, (light_dist, -light_dist, max_s),
+                                context.scene.tt_key_strength, context.scene.tt_key_color, max_s)
+    create_or_update_area_light(FILL_NAME, "Fill_Data", target, (-light_dist, light_dist, max_s * 0.7),
+                                context.scene.tt_fill_strength, context.scene.tt_fill_color, max_s)
+    create_or_update_area_light(RIM_NAME, "Rim_Data", target, (0, -light_dist * 1.3, max_s * 0.8),
+                                context.scene.tt_rim_strength, context.scene.tt_rim_color, max_s)
     if cam:
         bpy.context.scene.camera = cam
+
 
 # ---- Operators ----
 class OBJECT_OT_tt_apply_setup(bpy.types.Operator):
@@ -188,18 +158,15 @@ class OBJECT_OT_tt_apply_setup(bpy.types.Operator):
         light_dist = max_s * 2.0
         base_energy = max(500.0, max_s * 200.0)
         cam = create_or_update_camera(target, dist, height)
-        create_or_update_area_light(KEY_NAME, "Key_Data", target, (light_dist, -light_dist, max_s), base_energy, (1.0,1.0,1.0), max_s)
-        create_or_update_area_light(FILL_NAME, "Fill_Data", target, (-light_dist, light_dist, max_s * 0.7), base_energy * 0.7, (1.0,1.0,1.0), max_s)
-        create_or_update_area_light(RIM_NAME, "Rim_Data", target, (0, -light_dist * 1.3, max_s * 0.8), base_energy * 0.5, (1.0,1.0,1.0), max_s)
-        sc.tt_camera_distance = (cam.location - target.location).length
-        sc.tt_key_strength = bpy.data.objects[KEY_NAME].data.energy
-        sc.tt_fill_strength = bpy.data.objects[FILL_NAME].data.energy
-        sc.tt_rim_strength = bpy.data.objects[RIM_NAME].data.energy
-        sc.tt_key_color = bpy.data.objects[KEY_NAME].data.color[:]
-        sc.tt_fill_color = bpy.data.objects[FILL_NAME].data.color[:]
-        sc.tt_rim_color = bpy.data.objects[RIM_NAME].data.color[:]
+        create_or_update_area_light(KEY_NAME, "Key_Data", target, (light_dist, -light_dist, max_s), base_energy,
+                                    (1.0, 1.0, 1.0), max_s)
+        create_or_update_area_light(FILL_NAME, "Fill_Data", target, (-light_dist, light_dist, max_s * 0.7),
+                                    base_energy * 0.7, (1.0, 1.0, 1.0), max_s)
+        create_or_update_area_light(RIM_NAME, "Rim_Data", target, (0, -light_dist * 1.3, max_s * 0.8),
+                                    base_energy * 0.5, (1.0, 1.0, 1.0), max_s)
         self.report({'INFO'}, "Turntable setup applied/updated")
         return {'FINISHED'}
+
 
 class OBJECT_OT_tt_add_animation(bpy.types.Operator):
     bl_idname = "turntable.add_animation"
@@ -212,25 +179,29 @@ class OBJECT_OT_tt_add_animation(bpy.types.Operator):
         if not target or target.type != 'MESH':
             self.report({'ERROR'}, "Please select a Mesh target or set Target in panel")
             return {'CANCELLED'}
-        frames = context.scene.tt_anim_frames
-        target.rotation_mode = 'XYZ'
-        base = target.rotation_euler.z
-        target.rotation_euler.z = base
-        target.keyframe_insert(data_path="rotation_euler", frame=1, index=2)
-        target.rotation_euler.z = base + 2 * math.pi
-        target.keyframe_insert(data_path="rotation_euler", frame=frames, index=2)
-        if target.animation_data and target.animation_data.action:
-            for fc in target.animation_data.action.fcurves:
-                if fc.data_path == "rotation_euler" and fc.array_index == 2:
-                    for kp in fc.keyframe_points:
-                        kp.interpolation = 'LINEAR'
-                    has_cycles = any(m.type == 'CYCLES' for m in fc.modifiers)
-                    if not has_cycles:
-                        fc.modifiers.new(type='CYCLES')
-        context.scene.frame_start = 1
-        context.scene.frame_end = frames
+        if target.animation_data:
+            target.animation_data_clear()
+            frames = context.scene.frame_end
+            target.rotation_mode = 'XYZ'
+            base = target.rotation_euler.z
+            target.keyframe_insert(data_path="rotation_euler", frame=1, index=2)
+            target.rotation_euler.z = base + 2 * math.pi
+            target.keyframe_insert(data_path="rotation_euler", frame=frames, index=2)
+            act = target.animation_data.action
+        else:
+            frames = context.scene.frame_end
+            target.rotation_mode = 'XYZ'
+            base = target.rotation_euler.z
+            target.keyframe_insert(data_path="rotation_euler", frame=1, index=2)
+            target.rotation_euler.z = base + 2 * math.pi
+            target.keyframe_insert(data_path="rotation_euler", frame=frames, index=2)
+            act = target.animation_data.action
+        for fc in act.fcurves:
+            for kp in fc.keyframe_points:
+                kp.interpolation = 'LINEAR'
         self.report({'INFO'}, f"Added rotation animation to {target.name} ({frames} frames)")
         return {'FINISHED'}
+
 
 # ---- UI Panel (English) ----
 class VIEW3D_PT_turntable_panel(bpy.types.Panel):
@@ -250,33 +221,41 @@ class VIEW3D_PT_turntable_panel(bpy.types.Panel):
         row.operator("turntable.apply_setup", icon='LIGHT_DATA')
         row.operator("turntable.add_animation", icon='ANIM')
 
-        layout.prop(sc, "tt_anim_frames", text="Animation Frames")
+        layout.prop(sc, 'frame_end', text="Animation Frames")
 
         layout.separator()
         layout.label(text="Camera")
         layout.prop(sc, "tt_camera_distance", text="Distance")
 
-        layout.separator()
-        layout.label(text="Key Light")
-        layout.prop(sc, "tt_key_strength", text="Brightness")
-        layout.prop(sc, "tt_key_color", text="Color")
+        try:
+            keylight = sc.objects[KEY_NAME].data
+            layout.label(text="Key Light")
+            layout.prop(keylight, "energy")
+            layout.prop(keylight, "color")
+        except:
+            pass
 
-        layout.separator()
-        layout.label(text="Fill Light")
-        layout.prop(sc, "tt_fill_strength", text="Brightness")
-        layout.prop(sc, "tt_fill_color", text="Color")
+        try:
+            fill_light = sc.objects[FILL_NAME].data
+            layout.label(text="Fill Light")
+            layout.prop(fill_light, "energy")
+            layout.prop(fill_light, "color")
+            rim_light = sc.objects[RIM_NAME].data
+        except:
+            pass
 
-        layout.separator()
-        layout.label(text="Rim Light")
-        layout.prop(sc, "tt_rim_strength", text="Brightness")
-        layout.prop(sc, "tt_rim_color", text="Color")
+        try:
+            rim_light = sc.objects[RIM_NAME].data
+            layout.label(text="Rim Light")
+            layout.prop(rim_light, "energy")
+            layout.prop(rim_light, "color")
+        except:
+            pass
+
 
 # ---- register/unregister ----
-classes = (
-    OBJECT_OT_tt_apply_setup,
-    OBJECT_OT_tt_add_animation,
-    VIEW3D_PT_turntable_panel,
-)
+classes = (OBJECT_OT_tt_apply_setup, OBJECT_OT_tt_add_animation, VIEW3D_PT_turntable_panel)
+
 
 def register():
     for cls in classes:
@@ -291,38 +270,15 @@ def register():
         name="Camera Distance",
         default=5.0, min=0.1, max=100.0, update=update_camera_distance
     )
-    bpy.types.Scene.tt_key_strength = bpy.props.FloatProperty(
-        name="Key Strength", default=1000.0, min=0.0, max=50000.0, update=update_key_strength
-    )
-    bpy.types.Scene.tt_fill_strength = bpy.props.FloatProperty(
-        name="Fill Strength", default=700.0, min=0.0, max=50000.0, update=update_fill_strength
-    )
-    bpy.types.Scene.tt_rim_strength = bpy.props.FloatProperty(
-        name="Rim Strength", default=500.0, min=0.0, max=50000.0, update=update_rim_strength
-    )
-    bpy.types.Scene.tt_key_color = bpy.props.FloatVectorProperty(
-        name="Key Color", subtype='COLOR', size=3, min=0.0, max=1.0, default=(1.0,1.0,1.0),
-        update=update_key_color
-    )
-    bpy.types.Scene.tt_fill_color = bpy.props.FloatVectorProperty(
-        name="Fill Color", subtype='COLOR', size=3, min=0.0, max=1.0, default=(1.0,1.0,1.0),
-        update=update_fill_color
-    )
-    bpy.types.Scene.tt_rim_color = bpy.props.FloatVectorProperty(
-        name="Rim Color", subtype='COLOR', size=3, min=0.0, max=1.0, default=(1.0,1.0,1.0),
-        update=update_rim_color
-    )
-    bpy.types.Scene.tt_anim_frames = bpy.props.IntProperty(
-        name="Animation Frames", default=250, min=4, max=10000
-    )
+
 
 def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
-    for p in ("tt_target","tt_camera_distance","tt_key_strength","tt_fill_strength",
-              "tt_rim_strength","tt_key_color","tt_fill_color","tt_rim_color","tt_anim_frames"):
+    for p in ("tt_target", "tt_camera_distance"):
         if hasattr(bpy.types.Scene, p):
             delattr(bpy.types.Scene, p)
+
 
 if __name__ == "__main__":
     register()
