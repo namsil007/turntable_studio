@@ -1,0 +1,11 @@
+schema_version = "0.17.0"
+id = "turntable_studio_panel"
+name = "Turntable Studio"
+version = "1.0.0"
+tagline = "Area lights (track to model),light intensity & color, camera distance, model rotation animation"
+maintainer = "Youjie, wei_sheng"
+type = "add-on"
+tags = ["Development"]
+blender_version_min = "4.4.3"
+license = ["SPDX:GPL-3.0-or-later"]
+copyright = ["2025 Youjie + ChatGPT, wei_sheng"]
