@@ -1,23 +1,19 @@
+import bpy
+from . import tt_utils
+from . import operator
+# tt_utils = bpy.data.texts["tt_utils.py"].as_module()
+# operator = bpy.data.texts["operator.py"].as_module()
+
+
 bl_info = {
     "name": "Turntable Studio",
     "author": "Youjie + ChatGPT, wei_sheng",
     "version": (0, 17, 0),
     "blender": (2, 80, 0),
     "location": "View3D > Sidebar > Turntable",
-    "description": "Area lights (track to model), per-light intensity & color, camera distance, model rotation animation, Apply Setup",
+    "description": "Area lights(track to model),per-light intensity & color,camera distance,model rotation animation",
     "category": "3D View"
 }
-
-import bpy
-import math
-from . import tt_utils
-from . import operator
-from mathutils import Vector
-from pathlib import Path
-
-
-# tt_utils = bpy.data.texts["tt_utils.py"].as_module()
-# operator = bpy.data.texts["operator.py"].as_module()
 
 
 class TurntableProperty(bpy.types.PropertyGroup):
@@ -94,8 +90,8 @@ class VIEW3D_PT_turntable_panel(bpy.types.Panel):
 
 
 # ---- register/unregister ----
-classes = (
-VIEW3D_PT_turntable_panel, TurntableProperty, operator.OBJECT_OT_tt_apply_setup, operator.OBJECT_OT_tt_add_animation)
+classes = (VIEW3D_PT_turntable_panel,
+           TurntableProperty, operator.OBJECT_OT_tt_apply_setup, operator.OBJECT_OT_tt_add_animation)
 
 
 def register():
