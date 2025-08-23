@@ -2,7 +2,6 @@ import bpy
 from mathutils import Vector
 from pathlib import Path
 
-
 # ---- constant names ----
 CAM_NAME = "Turntable_Camera"
 KEY_NAME = "Key_Light"
@@ -80,8 +79,8 @@ def create_or_update_area_light(name, data_name, target, offset, energy, color, 
         except Exception:
             pass
     light_obj.location = target.location + Vector(offset)
-#    light_obj.data.energy = energy
-#    light_obj.data.color = color
+    #    light_obj.data.energy = energy
+    #    light_obj.data.color = color
     tr = None
     for c in light_obj.constraints:
         if c.type == 'TRACK_TO' and getattr(c, "name", "") == "Turntable_LightTrack":
@@ -121,11 +120,11 @@ def update_target(self, context):
     context.scene.turntable.tt_camera_distance = (cam.location - target.location).length
     light_dist = max_s * 2.0
     create_or_update_area_light(KEY_NAME, "Key_Data", target, (light_dist, -light_dist, max_s),
-                                1000, (1.0,1.0,1.0), max_s)
+                                1000, (1.0, 1.0, 1.0), max_s)
     create_or_update_area_light(FILL_NAME, "Fill_Data", target, (-light_dist, light_dist, max_s * 0.7),
-                                700, (1.0,1.0,1.0), max_s)
+                                700, (1.0, 1.0, 1.0), max_s)
     create_or_update_area_light(RIM_NAME, "Rim_Data", target, (0, -light_dist * 1.3, max_s * 0.8),
-                                500, (1.0,1.0,1.0), max_s)
+                                500, (1.0, 1.0, 1.0), max_s)
     if cam:
         bpy.context.scene.camera = cam
 
@@ -134,32 +133,44 @@ def create_or_update_hdri(self, context):
     sc = bpy.context.scene
     if not sc.turntable.use_hdri:
         return
-    
+
     env_node = sc.world.node_tree.nodes.get('Environment Texture')
     bg_node = sc.world.node_tree.nodes['Background']
     image_name = f"{sc.turntable.enum}.exr"
-    image_in_data =  bpy.data.images.get(image_name)
-    
+    image_in_data = bpy.data.images.get(image_name)
+
     if image_in_data:
         image = image_in_data
     else:
         image_path = Path(sc.turntable.image_path) / image_name
         image = bpy.data.images.load(str(image_path))
-    
+
     if env_node:
         env_node.image = image
-        env_node.image.colorspace_settings.name = 'Linear Rec.709 (sRGB)'
+        env_node.image.colorspace_settings.name = 'Linear Rec.709'
     else:
         env_node = sc.world.node_tree.nodes.new('ShaderNodeTexEnvironment')
+        map_node = sc.world.node_tree.nodes.new('ShaderNodeMapping')
+        texcod_node = sc.world.node_tree.nodes.new('ShaderNodeTexCoord')
         env_node.image = image
-        env_node.image.colorspace_settings.name = 'Linear Rec.709 (sRGB)'
+        env_node.image.colorspace_settings.name = 'Linear Rec.709'
         sc.world.node_tree.links.new(bg_node.inputs[0], env_node.outputs[0])
+        sc.world.node_tree.links.new(env_node.inputs[0], map_node.outputs[0])
+        sc.world.node_tree.links.new(map_node.inputs[0], texcod_node.outputs[0])
+
+        fcs = map_node.inputs['Rotation'].driver_add('default_value', 2)
+        fcs.driver.type = 'AVERAGE'
+        var = fcs.driver.variables.new()
+        target0 = var.targets[0]
+        target0.id_type = 'SCENE'
+        target0.id = sc
+        target0.data_path = 'turntable.hdri_rotation_z'
 
 
 def get_image_items(self, context):
     image_path = Path(context.scene.turntable.image_path)
-    items=[]
+    items = []
     for image in image_path.iterdir():
         item = (image.stem, image.stem, '')
-        items.append(item)    
+        items.append(item)
     return items
