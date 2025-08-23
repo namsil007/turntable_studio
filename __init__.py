@@ -1,6 +1,7 @@
 import bpy
 from . import tt_utils
 from . import operator
+
 # tt_utils = bpy.data.texts["tt_utils.py"].as_module()
 # operator = bpy.data.texts["operator.py"].as_module()
 
@@ -18,6 +19,7 @@ bl_info = {
 
 class TurntableProperty(bpy.types.PropertyGroup):
     use_hdri: bpy.props.BoolProperty(name='HDRI')
+    hdri_rotation_z: bpy.props.FloatProperty(name="Rotation", subtype='ANGLE')
     image_path: bpy.props.StringProperty(name='Image path', subtype='DIR_PATH')
 
     enum: bpy.props.EnumProperty(
@@ -47,6 +49,10 @@ class VIEW3D_PT_turntable_panel(bpy.types.Panel):
         layout = self.layout
         sc = context.scene
 
+        keylight = sc.objects.get(tt_utils.KEY_NAME)
+        fill_light = sc.objects.get(tt_utils.FILL_NAME)
+        rim_light = sc.objects.get(tt_utils.RIM_NAME)
+
         layout.label(text="Target (select or set below)")
         layout.prop(sc.turntable, "tt_target", text="Target")
         row = layout.row()
@@ -59,34 +65,26 @@ class VIEW3D_PT_turntable_panel(bpy.types.Panel):
         if sc.turntable.use_hdri:
             layout.prop(sc.turntable, 'image_path', text='')
             layout.prop(sc.turntable, 'enum', text='')
+            layout.prop(sc.turntable, 'hdri_rotation_z')
 
         layout.separator()
         layout.label(text="Camera")
         layout.prop(sc.turntable, "tt_camera_distance", text="Distance")
 
-        try:
-            keylight = sc.objects[tt_utils.KEY_NAME].data
+        if keylight:
             layout.label(text="Key Light")
-            layout.prop(keylight, "energy")
-            layout.prop(keylight, "color")
-        except:
-            pass
+            layout.prop(keylight.data, "energy")
+            layout.prop(keylight.data, "color")
 
-        try:
-            fill_light = sc.objects[tt_utils.FILL_NAME].data
+        if fill_light:
             layout.label(text="Fill Light")
-            layout.prop(fill_light, "energy")
-            layout.prop(fill_light, "color")
-        except:
-            pass
+            layout.prop(fill_light.data, "energy")
+            layout.prop(fill_light.data, "color")
 
-        try:
-            rim_light = sc.objects[tt_utils.RIM_NAME].data
+        if rim_light:
             layout.label(text="Rim Light")
-            layout.prop(rim_light, "energy")
-            layout.prop(rim_light, "color")
-        except:
-            pass
+            layout.prop(rim_light.data, "energy")
+            layout.prop(rim_light.data, "color")
 
 
 # ---- register/unregister ----
