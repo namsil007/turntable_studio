@@ -129,6 +129,23 @@ def update_target(self, context):
         bpy.context.scene.camera = cam
 
 
+def create_blur_node():
+    lib_path = Path(__file__).parent / 'asset' / 'blur_node.blend'
+    blur_node_group = bpy.data.node_groups.get('BlurNode')
+
+    if not blur_node_group:
+        with bpy.data.libraries.load(str(lib_path)) as (data_from, data_to):
+            data_to.node_groups = data_from.node_groups
+
+    blur_node_group = bpy.data.node_groups['BlurNode']
+    blur_node = bpy.context.scene.world.node_tree.nodes.get('BlurNode')
+    if not blur_node:
+        blur_node = bpy.context.scene.world.node_tree.nodes.new('ShaderNodeGroup')
+        blur_node.node_tree = blur_node_group
+        blur_node.name = 'BlurNode'
+    return blur_node
+
+
 def create_or_update_hdri(self, context):
     sc = bpy.context.scene
     if not sc.turntable.use_hdri:
@@ -152,10 +169,13 @@ def create_or_update_hdri(self, context):
         env_node = sc.world.node_tree.nodes.new('ShaderNodeTexEnvironment')
         map_node = sc.world.node_tree.nodes.new('ShaderNodeMapping')
         texcod_node = sc.world.node_tree.nodes.new('ShaderNodeTexCoord')
+        blur_node = create_blur_node()
+
         env_node.image = image
         env_node.image.colorspace_settings.name = 'Linear Rec.709'
         sc.world.node_tree.links.new(bg_node.inputs[0], env_node.outputs[0])
-        sc.world.node_tree.links.new(env_node.inputs[0], map_node.outputs[0])
+        sc.world.node_tree.links.new(env_node.inputs[0], blur_node.outputs[0])
+        sc.world.node_tree.links.new(blur_node.inputs[1], map_node.outputs[0])
         sc.world.node_tree.links.new(map_node.inputs[0], texcod_node.outputs[0])
 
         fcs = map_node.inputs['Rotation'].driver_add('default_value', 2)
