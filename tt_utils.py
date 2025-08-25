@@ -146,6 +146,20 @@ def create_blur_node():
     return blur_node
 
 
+def add_driver(node_inputs, data_path, index=None):
+    sc = bpy.context.scene
+    if index:
+        fcs = node_inputs.driver_add('default_value', index)
+    else:
+        fcs = node_inputs.driver_add('default_value')
+    fcs.driver.type = 'AVERAGE'
+    var = fcs.driver.variables.new()
+    target0 = var.targets[0]
+    target0.id_type = 'SCENE'
+    target0.id = sc
+    target0.data_path = data_path
+
+
 def create_or_update_hdri(self, context):
     sc = bpy.context.scene
     if not sc.turntable.use_hdri:
@@ -178,13 +192,9 @@ def create_or_update_hdri(self, context):
         sc.world.node_tree.links.new(blur_node.inputs[1], map_node.outputs[0])
         sc.world.node_tree.links.new(map_node.inputs[0], texcod_node.outputs[0])
 
-        fcs = map_node.inputs['Rotation'].driver_add('default_value', 2)
-        fcs.driver.type = 'AVERAGE'
-        var = fcs.driver.variables.new()
-        target0 = var.targets[0]
-        target0.id_type = 'SCENE'
-        target0.id = sc
-        target0.data_path = 'turntable.hdri_rotation_z'
+        add_driver(map_node.inputs['Rotation'], 'turntable.hdri_rotation_z', 2)
+        add_driver(blur_node.inputs['Factor'], 'turntable.hdri_blur_bg')
+        add_driver(bg_node.inputs['Strength'], 'turntable.hdri_strength')
 
 
 def get_image_items(self, context):
