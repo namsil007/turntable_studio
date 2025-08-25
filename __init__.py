@@ -20,6 +20,8 @@ bl_info = {
 class TurntableProperty(bpy.types.PropertyGroup):
     use_hdri: bpy.props.BoolProperty(name='HDRI')
     hdri_rotation_z: bpy.props.FloatProperty(name="Rotation", subtype='ANGLE')
+    hdri_strength : bpy.props.FloatProperty(name='Strength', default=1.0)
+    hdri_blur_bg : bpy.props.FloatProperty(name='Blur', min=0, max=1, subtype='FACTOR')
     image_path: bpy.props.StringProperty(name='Image path', subtype='DIR_PATH')
 
     enum: bpy.props.EnumProperty(
@@ -66,6 +68,8 @@ class VIEW3D_PT_turntable_panel(bpy.types.Panel):
             layout.prop(sc.turntable, 'image_path', text='')
             layout.prop(sc.turntable, 'enum', text='')
             layout.prop(sc.turntable, 'hdri_rotation_z')
+            layout.prop(sc.turntable, 'hdri_strength')
+            layout.prop(sc.turntable, 'hdri_blur_bg')
 
         layout.separator()
         layout.label(text="Camera")
