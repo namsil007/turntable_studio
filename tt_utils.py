@@ -17,16 +17,29 @@ def get_world_bounds_size(obj):
 
 def ensure_collection(name):
     col = bpy.data.collections.get(name)
+    col_light = bpy.data.collections.get('Light')
     if not col:
         col = bpy.data.collections.new(name)
+        col_light = bpy.data.collections.new('Light')
         bpy.context.scene.collection.children.link(col)
-    return col
+        col.children.link(col_light)
+    return col, col_light
 
+
+def sync_select_list(self, context):    
+    col = bpy.data.collections['Light']
+    obj = col.objects[col.light_list_index]
+    
+    for ob in col.objects:
+        ob.select_set(False)    
+    
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
 
 # ---- camera create/update ----
 def create_or_update_camera(target, dist, height):
     cam = bpy.data.objects.get(CAM_NAME)
-    col = ensure_collection(COLLECTION_NAME)
+    col, col_light = ensure_collection(COLLECTION_NAME)
     if cam and cam.type == 'CAMERA':
         cam.location = target.location + Vector((0, -dist, height))
     else:
@@ -55,7 +68,7 @@ def create_or_update_camera(target, dist, height):
 
 # ---- area light create/update ----
 def create_or_update_area_light(name, data_name, target, offset, energy, color, size):
-    col = ensure_collection(COLLECTION_NAME)
+    col, col_light = ensure_collection(COLLECTION_NAME)
     light_obj = bpy.data.objects.get(name)
     if light_obj and light_obj.type == 'LIGHT':
         light_obj.data.type = 'AREA'
@@ -70,12 +83,12 @@ def create_or_update_area_light(name, data_name, target, offset, energy, color, 
         except Exception:
             pass
         light_obj = bpy.data.objects.new(name, ldata)
-        col.objects.link(light_obj)
+        col_light.objects.link(light_obj)
         light_obj.data.energy = energy
         light_obj.data.color = color
-    if light_obj.name not in col.objects:
+    if light_obj.name not in col_light.objects:
         try:
-            col.objects.link(light_obj)
+            col_light.objects.link(light_obj)
         except Exception:
             pass
     light_obj.location = target.location + Vector(offset)
@@ -131,6 +144,7 @@ def update_target(self, context):
 
 def create_blur_node():
     lib_path = Path(__file__).parent / 'asset' / 'blur_node.blend'
+    # lib_path = r"D:\Desktop\study python\TurntableStudio\turntable_studio\asset\blur_node.blend"
     blur_node_group = bpy.data.node_groups.get('BlurNode')
 
     if not blur_node_group:
