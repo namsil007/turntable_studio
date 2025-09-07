@@ -1,10 +1,11 @@
 import bpy
 from . import tt_utils
 from . import operator
+from . import LightControlPanel
 
 # tt_utils = bpy.data.texts["tt_utils.py"].as_module()
 # operator = bpy.data.texts["operator.py"].as_module()
-
+# LightControlPanel = bpy.data.texts["LightControlPanel.py"].as_module()
 
 bl_info = {
     "name": "Turntable Studio",
@@ -40,9 +41,9 @@ class TurntableProperty(bpy.types.PropertyGroup):
 
 
 # ---- UI Panel (English) ----
-class VIEW3D_PT_turntable_panel(bpy.types.Panel):
+class TurntableStudioPanel(bpy.types.Panel):
     bl_label = "Turntable Studio"
-    bl_idname = "VIEW3D_PT_turntable_studio_v14"
+    bl_idname = "VIEW3D_PT_turntable_studio"
     bl_space_type = 'VIEW_3D'
     bl_region_type = 'UI'
     bl_category = 'Turntable'
@@ -50,10 +51,6 @@ class VIEW3D_PT_turntable_panel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         sc = context.scene
-
-        keylight = sc.objects.get(tt_utils.KEY_NAME)
-        fill_light = sc.objects.get(tt_utils.FILL_NAME)
-        rim_light = sc.objects.get(tt_utils.RIM_NAME)
 
         layout.label(text="Target (select or set below)")
         layout.prop(sc.turntable, "tt_target", text="Target")
@@ -75,25 +72,12 @@ class VIEW3D_PT_turntable_panel(bpy.types.Panel):
         layout.label(text="Camera")
         layout.prop(sc.turntable, "tt_camera_distance", text="Distance")
 
-        if keylight:
-            layout.label(text="Key Light")
-            layout.prop(keylight.data, "energy")
-            layout.prop(keylight.data, "color")
-
-        if fill_light:
-            layout.label(text="Fill Light")
-            layout.prop(fill_light.data, "energy")
-            layout.prop(fill_light.data, "color")
-
-        if rim_light:
-            layout.label(text="Rim Light")
-            layout.prop(rim_light.data, "energy")
-            layout.prop(rim_light.data, "color")
-
 
 # ---- register/unregister ----
-classes = (VIEW3D_PT_turntable_panel,
-           TurntableProperty, operator.OBJECT_OT_tt_apply_setup, operator.OBJECT_OT_tt_add_animation)
+classes = (TurntableStudioPanel, TurntableProperty,
+           operator.OBJECT_OT_tt_apply_setup, operator.OBJECT_OT_tt_add_animation,
+           LightControlPanel.LightControlPanel, LightControlPanel.Light_UL_list,
+           LightControlPanel.LIST_OT_light_list_add, LightControlPanel.LIST_OT_light_list_delete)
 
 
 def register():
@@ -101,14 +85,14 @@ def register():
         bpy.utils.register_class(cls)
 
     bpy.types.Scene.turntable = bpy.props.PointerProperty(type=TurntableProperty)
+    bpy.types.Collection.light_list_index = bpy.props.IntProperty(update=tt_utils.sync_select_list)
 
 
 def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
-    for p in ("tt_target", "tt_camera_distance"):
-        if hasattr(bpy.types.Scene.turntable, p):
-            delattr(bpy.types.Scene.turntable, p)
+    del bpy.types.Scene.turntable
+    del bpy.types.Collection.light_list_index
 
 
 if __name__ == "__main__":
