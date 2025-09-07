@@ -51,7 +51,7 @@ class LightControlPanel(bpy.types.Panel):
     bl_label = "Light List"
     bl_space_type = "VIEW_3D"
     bl_region_type = "UI"
-    bl_parent_id = "VIEW3D_PT_turntable_studio_v14"
+    bl_parent_id = "VIEW3D_PT_turntable_studio"
 
     def draw(self, context):
         layout = self.layout
