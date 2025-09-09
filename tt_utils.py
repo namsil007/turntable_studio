@@ -8,6 +8,7 @@ KEY_NAME = "Key_Light"
 FILL_NAME = "Fill_Light"
 RIM_NAME = "Rim_Light"
 COLLECTION_NAME = "Turntable_Studio"
+LIGHT_COLLECTION = "Light"
 
 
 # ---- utilities ----
@@ -17,10 +18,10 @@ def get_world_bounds_size(obj):
 
 def ensure_collection(name):
     col = bpy.data.collections.get(name)
-    col_light = bpy.data.collections.get('Light')
+    col_light = bpy.data.collections.get(LIGHT_COLLECTION)
     if not col:
         col = bpy.data.collections.new(name)
-        col_light = bpy.data.collections.new('Light')
+        col_light = bpy.data.collections.new(LIGHT_COLLECTION)
         bpy.context.scene.collection.children.link(col)
         col.children.link(col_light)
     return col, col_light
@@ -144,7 +145,6 @@ def update_target(self, context):
 
 def create_blur_node():
     lib_path = Path(__file__).parent / 'asset' / 'blur_node.blend'
-    # lib_path = r"D:\Desktop\study python\TurntableStudio\turntable_studio\asset\blur_node.blend"
     blur_node_group = bpy.data.node_groups.get('BlurNode')
 
     if not blur_node_group:
@@ -176,8 +176,6 @@ def add_driver(node_inputs, data_path, index=None):
 
 def create_or_update_hdri(self, context):
     sc = bpy.context.scene
-    if not sc.turntable.use_hdri:
-        return
 
     env_node = sc.world.node_tree.nodes.get('Environment Texture')
     bg_node = sc.world.node_tree.nodes['Background']
