@@ -8,7 +8,7 @@ KEY_NAME = "Key_Light"
 FILL_NAME = "Fill_Light"
 RIM_NAME = "Rim_Light"
 COLLECTION_NAME = "Turntable_Studio"
-LIGHT_COLLECTION = "Light"
+LIGHT_COLLECTION = "Turntable_Light"
 
 
 # ---- utilities ----
@@ -17,18 +17,28 @@ def get_world_bounds_size(obj):
 
 
 def ensure_collection(name):
+    scene_col = bpy.context.scene.collection
     col = bpy.data.collections.get(name)
     col_light = bpy.data.collections.get(LIGHT_COLLECTION)
+
     if not col:
         col = bpy.data.collections.new(name)
-        col_light = bpy.data.collections.new(LIGHT_COLLECTION)
         bpy.context.scene.collection.children.link(col)
+
+    if not col_light:
+        col_light = bpy.data.collections.new(LIGHT_COLLECTION)
         col.children.link(col_light)
+
+    if not col.children.get(LIGHT_COLLECTION):
+        col.children.link(col_light)
+
+    if scene_col.children.get(LIGHT_COLLECTION):
+        scene_col.children.unlink(col_light)
     return col, col_light
 
 
 def sync_select_list(self, context):    
-    col = bpy.data.collections['Light']
+    col = bpy.data.collections.get(LIGHT_COLLECTION)
     obj = col.objects[col.light_list_index]
     
     for ob in col.objects:
@@ -36,6 +46,7 @@ def sync_select_list(self, context):
     
     obj.select_set(True)
     bpy.context.view_layer.objects.active = obj
+
 
 # ---- camera create/update ----
 def create_or_update_camera(target, dist, height):
