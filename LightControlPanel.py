@@ -1,5 +1,5 @@
 import bpy
-
+from . import tt_utils
 
 class LIGHT_UL_list(bpy.types.UIList):
     def draw_item(self, context, layout, data, item, icon, active_data, active_property, index):
@@ -20,7 +20,7 @@ class LightControlPanel(bpy.types.Panel):
     def draw(self, context):
         layout = self.layout
         scene = context.scene
-        collection = bpy.data.collections.get('Light')
+        collection = bpy.data.collections.get(tt_utils.LIGHT_COLLECTION)
         
         if collection:
             layout.label(text='Light Control', icon="LIGHT")
