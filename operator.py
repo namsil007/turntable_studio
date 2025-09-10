@@ -103,7 +103,7 @@ class LIST_OT_light_list_delete(bpy.types.Operator):
 
     @classmethod
     def poll(cls, context):
-        col = bpy.data.collections['Light']
+        col = bpy.data.collections.get(tt_utils.LIGHT_COLLECTION)
         return col.objects.values()
 
     @staticmethod
