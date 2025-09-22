@@ -1,7 +1,7 @@
 import bpy
 import math
 from . import tt_utils
-#tt_utils = bpy.data.texts["tt_utils.py"].as_module()
+# tt_utils = bpy.data.texts["tt_utils.py"].as_module()
 
 
 # ---- Operators ----
@@ -10,7 +10,8 @@ class OBJECT_OT_tt_apply_setup(bpy.types.Operator):
     bl_label = "Apply Studio Setup"
     bl_description = "Apply or update turntable camera and area lights for the selected or specified target"
     bl_options = {'REGISTER', 'UNDO'}
-
+    
+    @staticmethod
     def execute(self, context):
         sc = context.scene
         target = sc.turntable.tt_target if sc.turntable.tt_target else context.active_object
@@ -32,7 +33,8 @@ class OBJECT_OT_tt_apply_setup(bpy.types.Operator):
         tt_utils.create_or_update_area_light(tt_utils.RIM_NAME, "Rim_Data", target, (0, -light_dist * 1.3, max_s * 0.8),
                                     base_energy * 0.5, (1.0, 1.0, 1.0), max_s)
         
-        tt_utils.create_or_update_hdri(self, context)
+        if sc.turntable.image_path and sc.turntable.use_hdri:
+            tt_utils.create_or_update_hdri(self, context)
         
         self.report({'INFO'}, "Turntable setup applied/updated")
         return {'FINISHED'}
@@ -70,4 +72,54 @@ class OBJECT_OT_tt_add_animation(bpy.types.Operator):
             for kp in fc.keyframe_points:
                 kp.interpolation = 'LINEAR'
         self.report({'INFO'}, f"Added rotation animation to {target.name} ({frames} frames)")
+        return {'FINISHED'}
+
+
+# ---- Light List Operators ----
+class LIST_OT_light_list_add(bpy.types.Operator):
+    bl_idname = "scene.light_list_add"
+    bl_label = "Add"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @staticmethod
+    def execute(self, context):
+        sc = context.scene
+
+        light_data = bpy.data.lights.new('Light', 'AREA')
+        light = bpy.data.objects.new('Light', light_data)
+        target = sc.turntable.tt_target
+
+        sx, sy, sz = tt_utils.get_world_bounds_size(target)
+        max_s = max(sx, sy, sz, 0.001)
+
+        tt_utils.create_or_update_area_light(light.name, light_data.name, target, (0, 0, max_s), light_data.energy,
+                                             light_data.color, max_s)
+
+        return {'FINISHED'}
+
+
+class LIST_OT_light_list_delete(bpy.types.Operator):
+    bl_idname = "scene.light_list_delete"
+    bl_label = "Delete"
+    bl_options = {'REGISTER', 'UNDO'}
+
+    @classmethod
+    def poll(cls, context):
+        col = bpy.data.collections.get(tt_utils.LIGHT_COLLECTION)
+        return col.objects.values()
+
+    @staticmethod
+    def execute(self, context):
+        col = bpy.data.collections.get(tt_utils.LIGHT_COLLECTION)
+
+        light = col.objects[col.light_list_index]
+        light_data = light.data
+
+        col.objects.unlink(light)
+        bpy.data.objects.remove(light)
+        bpy.data.lights.remove(light_data)
+
+        index = col.light_list_index
+        col.light_list_index = min(max(0, index - 1), len(col.objects))
+
         return {'FINISHED'}

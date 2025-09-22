@@ -8,6 +8,8 @@ KEY_NAME = "Key_Light"
 FILL_NAME = "Fill_Light"
 RIM_NAME = "Rim_Light"
 COLLECTION_NAME = "Turntable_Studio"
+LIGHT_COLLECTION = "Turntable_Light"
+hdri_preview_collections = {}
 
 
 # ---- utilities ----
@@ -16,17 +18,41 @@ def get_world_bounds_size(obj):
 
 
 def ensure_collection(name):
+    scene_col = bpy.context.scene.collection
     col = bpy.data.collections.get(name)
+    col_light = bpy.data.collections.get(LIGHT_COLLECTION)
+
     if not col:
         col = bpy.data.collections.new(name)
         bpy.context.scene.collection.children.link(col)
-    return col
+
+    if not col_light:
+        col_light = bpy.data.collections.new(LIGHT_COLLECTION)
+        col.children.link(col_light)
+
+    if not col.children.get(LIGHT_COLLECTION):
+        col.children.link(col_light)
+
+    if scene_col.children.get(LIGHT_COLLECTION):
+        scene_col.children.unlink(col_light)
+    return col, col_light
+
+
+def sync_select_list(self, context):    
+    col = bpy.data.collections.get(LIGHT_COLLECTION)
+    obj = col.objects[col.light_list_index]
+    
+    for ob in col.objects:
+        ob.select_set(False)    
+    
+    obj.select_set(True)
+    bpy.context.view_layer.objects.active = obj
 
 
 # ---- camera create/update ----
 def create_or_update_camera(target, dist, height):
     cam = bpy.data.objects.get(CAM_NAME)
-    col = ensure_collection(COLLECTION_NAME)
+    col, col_light = ensure_collection(COLLECTION_NAME)
     if cam and cam.type == 'CAMERA':
         cam.location = target.location + Vector((0, -dist, height))
     else:
@@ -55,7 +81,7 @@ def create_or_update_camera(target, dist, height):
 
 # ---- area light create/update ----
 def create_or_update_area_light(name, data_name, target, offset, energy, color, size):
-    col = ensure_collection(COLLECTION_NAME)
+    col, col_light = ensure_collection(COLLECTION_NAME)
     light_obj = bpy.data.objects.get(name)
     if light_obj and light_obj.type == 'LIGHT':
         light_obj.data.type = 'AREA'
@@ -70,12 +96,12 @@ def create_or_update_area_light(name, data_name, target, offset, energy, color, 
         except Exception:
             pass
         light_obj = bpy.data.objects.new(name, ldata)
-        col.objects.link(light_obj)
+        col_light.objects.link(light_obj)
         light_obj.data.energy = energy
         light_obj.data.color = color
-    if light_obj.name not in col.objects:
+    if light_obj.name not in col_light.objects:
         try:
-            col.objects.link(light_obj)
+            col_light.objects.link(light_obj)
         except Exception:
             pass
     light_obj.location = target.location + Vector(offset)
@@ -162,8 +188,6 @@ def add_driver(node_inputs, data_path, index=None):
 
 def create_or_update_hdri(self, context):
     sc = bpy.context.scene
-    if not sc.turntable.use_hdri:
-        return
 
     env_node = sc.world.node_tree.nodes.get('Environment Texture')
     bg_node = sc.world.node_tree.nodes['Background']
@@ -198,9 +222,27 @@ def create_or_update_hdri(self, context):
 
 
 def get_image_items(self, context):
-    image_path = Path(context.scene.turntable.image_path)
-    items = []
-    for image in image_path.iterdir():
-        item = (image.stem, image.stem, '')
-        items.append(item)
-    return items
+    enum_items = []
+
+    if context is None:
+        return enum_items
+
+    image_dir = Path(context.scene.turntable.image_path)
+    images = [i for i in image_dir.glob("*.exr")]
+    pcoll = hdri_preview_collections["main"]
+
+    if image_dir == pcoll.image_dir:
+        return pcoll.hdri_previews
+    
+    for i, image in enumerate(images):
+        name = image.stem
+        icon = pcoll.get(name)
+        if not icon:
+            thumd = pcoll.load(name, str(image), 'IMAGE')
+        else:
+            thumd = pcoll[name]
+        enum_items.append((name, name, "", thumd.icon_id, i))
+
+    pcoll.hdri_previews = enum_items
+    pcoll.image_dir = image_dir
+    return enum_items
