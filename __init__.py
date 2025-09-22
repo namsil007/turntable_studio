@@ -1,10 +1,11 @@
 import bpy
+import bpy.utils.previews
 from . import tt_utils, operator, LightControlPanel, TurntableProperty
 
 # tt_utils = bpy.data.texts["tt_utils.py"].as_module()
 # operator = bpy.data.texts["operator.py"].as_module()
 # LightControlPanel = bpy.data.texts["LightControlPanel.py"].as_module()
-# TurntableProperty = bpy.data.texts["TurntableProperty"].as_module()
+# TurntableProperty = bpy.data.texts["TurntableProperty.py"].as_module()
 
 bl_info = {
     "name": "Turntable Studio",
@@ -54,7 +55,12 @@ classes = (TurntableStudioPanel, TurntableProperty.TurntableProperty,
 def register():
     for cls in classes:
         bpy.utils.register_class(cls)
-
+    
+    pcoll = bpy.utils.previews.new()
+    pcoll.image_dir = ""
+    pcoll.hdri_previews = ()
+    tt_utils.hdri_preview_collections["main"] = pcoll
+    
     bpy.types.Scene.turntable = bpy.props.PointerProperty(type=TurntableProperty.TurntableProperty)
     bpy.types.Collection.light_list_index = bpy.props.IntProperty(update=tt_utils.sync_select_list)
 
@@ -62,9 +68,14 @@ def register():
 def unregister():
     for cls in reversed(classes):
         bpy.utils.unregister_class(cls)
+    for pcoll in tt_utils.hdri_preview_collections.values():
+        bpy.utils.previews.remove(pcoll)
+    
     del bpy.types.Scene.turntable
     del bpy.types.Collection.light_list_index
-
+    
+    tt_utils.hdri_preview_collections.clear()
+    
 
 if __name__ == "__main__":
     register()

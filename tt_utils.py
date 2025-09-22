@@ -9,6 +9,7 @@ FILL_NAME = "Fill_Light"
 RIM_NAME = "Rim_Light"
 COLLECTION_NAME = "Turntable_Studio"
 LIGHT_COLLECTION = "Turntable_Light"
+hdri_preview_collections = {}
 
 
 # ---- utilities ----
@@ -221,9 +222,27 @@ def create_or_update_hdri(self, context):
 
 
 def get_image_items(self, context):
-    image_path = Path(context.scene.turntable.image_path)
-    items = []
-    for image in image_path.iterdir():
-        item = (image.stem, image.stem, '')
-        items.append(item)
-    return items
+    enum_items = []
+
+    if context is None:
+        return enum_items
+
+    image_dir = Path(context.scene.turntable.image_path)
+    images = [i for i in image_dir.glob("*.exr")]
+    pcoll = hdri_preview_collections["main"]
+
+    if image_dir == pcoll.image_dir:
+        return pcoll.hdri_previews
+    
+    for i, image in enumerate(images):
+        name = image.stem
+        icon = pcoll.get(name)
+        if not icon:
+            thumd = pcoll.load(name, str(image), 'IMAGE')
+        else:
+            thumd = pcoll[name]
+        enum_items.append((name, name, "", thumd.icon_id, i))
+
+    pcoll.hdri_previews = enum_items
+    pcoll.image_dir = image_dir
+    return enum_items

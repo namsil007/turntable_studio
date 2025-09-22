@@ -79,6 +79,7 @@ class OBJECT_OT_tt_add_animation(bpy.types.Operator):
 class LIST_OT_light_list_add(bpy.types.Operator):
     bl_idname = "scene.light_list_add"
     bl_label = "Add"
+    bl_options = {'REGISTER', 'UNDO'}
 
     @staticmethod
     def execute(self, context):
@@ -100,6 +101,7 @@ class LIST_OT_light_list_add(bpy.types.Operator):
 class LIST_OT_light_list_delete(bpy.types.Operator):
     bl_idname = "scene.light_list_delete"
     bl_label = "Delete"
+    bl_options = {'REGISTER', 'UNDO'}
 
     @classmethod
     def poll(cls, context):
