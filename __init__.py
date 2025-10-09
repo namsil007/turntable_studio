@@ -10,8 +10,8 @@ from . import tt_utils, operator, LightControlPanel, TurntableProperty
 bl_info = {
     "name": "Turntable Studio",
     "author": "Youjie + ChatGPT, wei_sheng",
-    "version": (0, 18, 0),
-    "blender": (2, 80, 0),
+    "version": (0, 19, 0),
+    "blender": (3, 60, 0),
     "location": "View3D > Sidebar > Turntable",
     "description": "Area lights(track to model),per-light intensity & color,camera distance,model rotation animation",
     "category": "3D View"
