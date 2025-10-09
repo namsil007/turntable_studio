@@ -34,8 +34,11 @@ class LightControlPanel(bpy.types.Panel):
         
         if scene.turntable.use_hdri:    
             layout.label(text='HDRI Control', icon='WORLD')
-            layout.prop(scene.turntable, 'image_path', text='', placeholder='選擇HDRI資料夾')
-        
+            try:
+                layout.prop(scene.turntable, 'image_path', text='', placeholder='選擇HDRI資料夾')
+            except TypeError:
+                layout.prop(scene.turntable, 'image_path', text='選擇HDRI資料夾')
+
         if scene.turntable.image_path and scene.turntable.use_hdri:
             box = layout.box()
             box.template_icon_view(scene.turntable, 'enum', show_labels=True)
