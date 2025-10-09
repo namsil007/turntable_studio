@@ -202,7 +202,10 @@ def create_or_update_hdri(self, context):
 
     if env_node:
         env_node.image = image
-        env_node.image.colorspace_settings.name = 'Linear Rec.709'
+        try:
+            env_node.image.colorspace_settings.name = 'Linear Rec.709'
+        except TypeError:
+            pass
     else:
         env_node = sc.world.node_tree.nodes.new('ShaderNodeTexEnvironment')
         map_node = sc.world.node_tree.nodes.new('ShaderNodeMapping')
@@ -210,7 +213,10 @@ def create_or_update_hdri(self, context):
         blur_node = create_blur_node()
 
         env_node.image = image
-        env_node.image.colorspace_settings.name = 'Linear Rec.709'
+        try:
+            env_node.image.colorspace_settings.name = 'Linear Rec.709'
+        except TypeError:
+            pass
         sc.world.node_tree.links.new(bg_node.inputs[0], env_node.outputs[0])
         sc.world.node_tree.links.new(env_node.inputs[0], blur_node.outputs[0])
         sc.world.node_tree.links.new(blur_node.inputs[1], map_node.outputs[0])
