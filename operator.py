@@ -1,6 +1,7 @@
 import bpy
 import math
 from . import tt_utils
+from bpy_extras.anim_utils import action_get_channelbag_for_slot
 # tt_utils = bpy.data.texts["tt_utils.py"].as_module()
 
 
@@ -59,7 +60,9 @@ class OBJECT_OT_tt_add_animation(bpy.types.Operator):
             target.keyframe_insert(data_path="rotation_euler", frame=1, index=2)
             target.rotation_euler.z = base + 2 * math.pi
             target.keyframe_insert(data_path="rotation_euler", frame=frames, index=2)
-            act = target.animation_data.action
+
+            anim_data = target.animation_data
+            action = anim_data.action
         else:
             frames = context.scene.frame_end
             target.rotation_mode = 'XYZ'
@@ -67,8 +70,13 @@ class OBJECT_OT_tt_add_animation(bpy.types.Operator):
             target.keyframe_insert(data_path="rotation_euler", frame=1, index=2)
             target.rotation_euler.z = base + 2 * math.pi
             target.keyframe_insert(data_path="rotation_euler", frame=frames, index=2)
-            act = target.animation_data.action
-        for fc in act.fcurves:
+
+            anim_data = target.animation_data
+            action = anim_data.action
+
+        # blender 5.0 取得物件的 action 底下的 channel bag 才能取得f-curves
+        channelbag = action_get_channelbag_for_slot(action, anim_data.action_slot)
+        for fc in channelbag.fcurves:
             for kp in fc.keyframe_points:
                 kp.interpolation = 'LINEAR'
         self.report({'INFO'}, f"Added rotation animation to {target.name} ({frames} frames)")
