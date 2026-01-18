@@ -8,7 +8,7 @@ class LIGHT_UL_list(bpy.types.UIList):
         if self.layout_type in {'DEFAULT', 'COMPACT'}:
             layout.prop(item.data, 'color', text='', icon="BLANK1")
             layout.prop(item, 'name', text='', emboss=False)
-            layout.prop(item.data, 'energy', text='', emboss=False, slider=True)
+            layout.prop(item.data, 'energy', text='', emboss=False)
             layout.prop(item, 'hide_viewport', text='', emboss=False, icon='HIDE_OFF')
 
 
