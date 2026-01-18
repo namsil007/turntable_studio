@@ -147,9 +147,9 @@ def update_target(self, context):
     light_dist = max_s * 2.0
     create_or_update_area_light(KEY_NAME, "Key_Data", target, (light_dist, -light_dist, max_s),
                                 1000, (1.0, 1.0, 1.0), max_s)
-    create_or_update_area_light(FILL_NAME, "Fill_Data", target, (-light_dist, light_dist, max_s * 0.7),
+    create_or_update_area_light(FILL_NAME, "Fill_Data", target, (0, -light_dist * 1.3, max_s * 0.8),
                                 700, (1.0, 1.0, 1.0), max_s)
-    create_or_update_area_light(RIM_NAME, "Rim_Data", target, (0, -light_dist * 1.3, max_s * 0.8),
+    create_or_update_area_light(RIM_NAME, "Rim_Data", target, (-light_dist, light_dist, max_s * 0.7),
                                 500, (1.0, 1.0, 1.0), max_s)
     if cam:
         bpy.context.scene.camera = cam

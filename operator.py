@@ -28,9 +28,9 @@ class OBJECT_OT_tt_apply_setup(bpy.types.Operator):
         cam = tt_utils.create_or_update_camera(target, dist, height)
         tt_utils.create_or_update_area_light(tt_utils.KEY_NAME, "Key_Data", target, (light_dist, -light_dist, max_s), base_energy,
                                     (1.0, 1.0, 1.0), max_s)
-        tt_utils.create_or_update_area_light(tt_utils.FILL_NAME, "Fill_Data", target, (-light_dist, light_dist, max_s * 0.7),
+        tt_utils.create_or_update_area_light(tt_utils.FILL_NAME, "Fill_Data", target, (0, -light_dist * 1.3, max_s * 0.8),
                                     base_energy * 0.7, (1.0, 1.0, 1.0), max_s)
-        tt_utils.create_or_update_area_light(tt_utils.RIM_NAME, "Rim_Data", target, (0, -light_dist * 1.3, max_s * 0.8),
+        tt_utils.create_or_update_area_light(tt_utils.RIM_NAME, "Rim_Data", target, (-light_dist, light_dist, max_s * 0.7),
                                     base_energy * 0.5, (1.0, 1.0, 1.0), max_s)
         
         if sc.turntable.image_path and sc.turntable.use_hdri:
